@@ -6,10 +6,10 @@ import json
 
 def connect_mysql(config):
     connection = mysql.connector.connect(
-        host = config.get("mysql", "ip"),
-        user = config.get("mysql", "user"),
-        password = config.get("mysql", "password"),
-        database = config.get("mysql", "db_name")
+        host = config.get("MySQL", "Ip"),
+        user = config.get("MySQL", "User"),
+        password = config.get("MySQL", "Password"),
+        database = config.get("MySQL", "Database Name")
     )
     return connection
 
@@ -39,6 +39,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             else:
                 # ovo brise sve postojece igre!!!
                 db.execute("TRUNCATE TABLE locations")
+                db.execute("TRUNCATE TABLE settings")
                 db.execute(f"INSERT INTO locations (Username) VALUES ('{username}')")
                 db.execute(f"INSERT INTO settings (Radius, Timeinterval) VALUES ('{radius}, '{timeInterval}')")
                 self.send_response(200)
@@ -55,10 +56,11 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             connection = connect_mysql(config)
             db = connection.cursor()
 
-            #self note: proveri ako user vec postoji i salji status 4xx ak da
-            if username == '':
+            db.execute(f"SELECT * FROM locations WHERE Username = '{username}'")
+            rows = db.fetchall()
+            if username == '' or rows != []:
                 self.send_response(400)
-            
+
             else:
                 db.execute(f"INSERT INTO locations (Username) VALUES ('{username}')")
                 self.send_response(200)
@@ -106,7 +108,8 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             body = []
 
             db.execute("SELECT Username, Location, Address FROM locations")
-            for (username, location, address) in db:
+            rows = db.fetchall()
+            for (username, location, address) in rows:
                 player={
                     "username": username,
                     "location": location,
