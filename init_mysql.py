@@ -7,10 +7,10 @@ import mysql.connector
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-ip = config.get('mysql', 'ip')
-db_name = config.get('mysql', 'db_name')
-user = config.get('mysql', 'user')
-password = config.get('mysql', 'password')
+ip = config.get('MySQL', 'Ip')
+db_name = config.get('MySQL', 'Database Name')
+user = config.get('MySQL', 'User')
+password = config.get('MySQL', 'Password')
 
 # connect to mysql server
 connection = mysql.connector.connect(
