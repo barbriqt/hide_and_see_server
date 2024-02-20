@@ -27,22 +27,33 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
         if (self.path == "/new_game"):
             username = post_params.get('username', [''])[0]
-            radius = post_params.get('radius', 0)[0]    #default radius je 0 (nema ga)
-            timeInterval = post_params.get('timeInterval', 300)[0]  #default timeIntercal je 5 minuta (300s)
+            radius = float(post_params.get('radius', [0])[0])    #default radius je 0 (nema ga)
+            timeInterval = int(post_params.get('timeInterval', [5])[0])  #default timeInterval je 5 minuta (300s)
             
             connection = connect_mysql(config)
             db = connection.cursor()
 
             if username == '':
                 self.send_response(400)
+                self.end_headers()
             
             else:
                 # ovo brise sve postojece igre!!!
+                self.send_response(200)
+                self.end_headers()
+
                 db.execute("TRUNCATE TABLE locations")
                 db.execute("TRUNCATE TABLE settings")
                 db.execute(f"INSERT INTO locations (Username) VALUES ('{username}')")
-                db.execute(f"INSERT INTO settings (Radius, Timeinterval) VALUES ('{radius}, '{timeInterval}')")
-                self.send_response(200)
+                db.execute(f"INSERT INTO settings (Radius, Timeinterval) VALUES ('{radius}', '{timeInterval}')")
+
+                body = {}
+                db.execute("SELECT * FROM settings")
+                for (radius, timeInterval) in db:
+                    body["radius"] = radius
+                    body["timeInterval"] = timeInterval
+                json_str_body = json.dumps(body) + "\n"
+                self.wfile.write(json_str_body.encode("utf-8"))
             
             connection.commit()
             db.close()
@@ -60,10 +71,20 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             rows = db.fetchall()
             if username == '' or rows != []:
                 self.send_response(400)
+                self.end_headers()
 
             else:
                 db.execute(f"INSERT INTO locations (Username) VALUES ('{username}')")
                 self.send_response(200)
+                self.end_headers()
+
+                body = {}
+                db.execute("SELECT * FROM settings")
+                for (radius, timeInterval) in db:
+                    body["radius"] = radius
+                    body["timeInterval"] = timeInterval
+                json_str_body = json.dumps(body) + "\n"
+                self.wfile.write(json_str_body.encode("utf-8"))
             
             connection.commit()
             db.close()
@@ -72,7 +93,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
 
 
-        elif (self.path == "/update"):
+        elif (self.path == "/locations"):
             username = post_params.get('username', [''])[0]
             location = post_params.get('location', [''])[0]
             address = post_params.get('address', [''])[0]
@@ -82,10 +103,13 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
             if username == '':
                 self.send_response(400)
+                self.end_headers()
             
             else:
-                db.execute(f"UPDATE locations SET Location='{location}', Address='{address}' WHERE Username='{username}'")
                 self.send_response(200)
+                self.end_headers()
+                db.execute(f"UPDATE locations SET Location='{location}', Address='{address}' WHERE Username='{username}'")
+                
 
             connection.commit()
             db.close()
@@ -95,13 +119,16 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
         else:
             self.send_response(404)
-        self.end_headers()
+            self.end_headers()
     
 
     def do_GET(self):
         global config
 
         if self.path == "/locations":
+            self.send_response(200)
+            self.end_headers()
+
             connection = connect_mysql(config)
             db = connection.cursor()
 
@@ -117,23 +144,29 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 }
                 body.append(player)
 
-            json_str_body = json.dumps(body)
+            json_str_body = json.dumps(body) + "\n"
             self.wfile.write(json_str_body.encode("utf-8"))
 
+            connection.commit()
+            db.close()
+            connection.close()
 
 
+        
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+        """
         elif self.path == "/settings":
              # ovo stoji za get settings funkciju kad zatreba
-            """
+            
             db.execute("SELECT * FROM settings")
             for (radius, timeInterval) in db:
                 body["settings"]["radius"] = radius
                 body["settings"]["timeInterval"] = timeInterval
-            """
-            
-        else:
-            self.send_response(404)
-        self.end_headers()
+        """
+
 
 
 config = configparser.ConfigParser()
