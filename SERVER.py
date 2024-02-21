@@ -132,17 +132,16 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             connection = connect_mysql(config)
             db = connection.cursor()
 
-            body = []
+            body = {}
 
             db.execute("SELECT Username, Location, Address FROM locations")
             rows = db.fetchall()
+            
             for (username, location, address) in rows:
-                player={
-                    "username": username,
+                body[username] = {
                     "location": location,
                     "address": address
                 }
-                body.append(player)
 
             json_str_body = json.dumps(body) + "\n"
             self.wfile.write(json_str_body.encode("utf-8"))
