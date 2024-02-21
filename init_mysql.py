@@ -40,8 +40,8 @@ db.execute("""
 )
 db.execute("""
     CREATE TABLE settings (
-        Radius FLOAT(15),
-        Timeinterval INT(255)
+        Setting varchar(255),
+        Value varchar(255)
     )
     """
 )
