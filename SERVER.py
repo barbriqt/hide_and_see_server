@@ -82,8 +82,12 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             db.execute(f"SELECT * FROM locations WHERE Username = '{username}'")
             rows = db.fetchall()
 
-            if username == '' or rows != []:
+            if username == '':
                 self.send_response(400)
+                self.end_headers()
+
+            elif rows != []:
+                self.send_response(409)
                 self.end_headers()
 
             else:
@@ -188,7 +192,7 @@ def testMySQLConnection():
         db.close()
         connection.close()
     except:
-        init_mysql.init()
+        init_mysql.init(config)
 
 def main():
     global config

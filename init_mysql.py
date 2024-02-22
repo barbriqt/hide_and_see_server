@@ -2,10 +2,7 @@ from getpass import getpass
 import configparser
 import mysql.connector
 
-def init():
-    # get config from config.ini file
-    config = configparser.ConfigParser()
-    config.read('config.ini')
+def init(config):
 
     ip = config.get('MySQL', 'Ip')
     db_name = config.get('MySQL', 'Database Name')
@@ -13,13 +10,16 @@ def init():
     password = config.get('MySQL', 'Password')
 
     # connect to mysql server
-    connection = mysql.connector.connect(
-        host = ip,
-        user = "root",
-        password = getpass("MySQL root Pass: ")
-    )
+    try:
+        connection = mysql.connector.connect(
+            host = config.get("MySQL", "Ip"),
+            user = config.get("MySQL", "User"),
+            password = getpass("MySQL root Pass: ")
+        )
+        db = connection.cursor()
 
-    db = connection.cursor()
+    except:
+        print("Check root password or try reinstalling MySQL")
 
     # delete existing user and database
     db.execute(f"DROP DATABASE IF EXISTS {db_name}")
