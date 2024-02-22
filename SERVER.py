@@ -4,6 +4,10 @@ from urllib.parse import *
 import mysql.connector
 import json
 
+config = configparser.ConfigParser()
+
+
+
 def connect_mysql(config):
     connection = mysql.connector.connect(
         host = config.get("MySQL", "Ip"),
@@ -12,6 +16,7 @@ def connect_mysql(config):
         database = config.get("MySQL", "Database Name")
     )
     return connection
+
 
 class MyHandler(http.server.BaseHTTPRequestHandler):
 
@@ -28,13 +33,13 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
         if (self.path == "/new_game"):
             username = post_params.get('username', [''])[0]
             start_loc = post_params.get('startLoc', [''])[0]
-            radius = post_params.get('radius', [''])[0]    #default radius je 0 (nema ga)
-            timeInterval = post_params.get('timeInterval', [''])[0]  #default timeInterval je 5 minuta (300s)
+            radius = post_params.get('radius', [''])[0]
+            timeInterval = post_params.get('timeInterval', [''])[0]
             
             connection = connect_mysql(config)
             db = connection.cursor()
 
-            if username == '':
+            if '' in (username, start_loc, radius, timeInterval):
                 self.send_response(400)
                 self.end_headers()
             
@@ -58,6 +63,8 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                     body[setting] = value
                 json_str_body = json.dumps(body) + "\n"
                 self.wfile.write(json_str_body.encode("utf-8"))
+
+                print(f"Korisnik {username} je stvorio novu igru")
             
             connection.commit()
             db.close()
@@ -73,6 +80,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
             db.execute(f"SELECT * FROM locations WHERE Username = '{username}'")
             rows = db.fetchall()
+
             if username == '' or rows != []:
                 self.send_response(400)
                 self.end_headers()
@@ -88,11 +96,12 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                     body[setting] = value
                 json_str_body = json.dumps(body) + "\n"
                 self.wfile.write(json_str_body.encode("utf-8"))
+
+                print(f"Korisnik {username} je ušao u igru")
             
             connection.commit()
             db.close()
             connection.close()
-
 
 
 
@@ -104,7 +113,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             connection = connect_mysql(config)
             db = connection.cursor()
 
-            if username == '':
+            if '' in (username, location):
                 self.send_response(400)
                 self.end_headers()
             
@@ -112,6 +121,8 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.end_headers()
                 db.execute(f"UPDATE locations SET Location='{location}', Address='{address}' WHERE Username='{username}'")
+
+                print(f"Primljena lokacija korisnika {username}")
                 
 
             connection.commit()
@@ -153,6 +164,8 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             db.close()
             connection.close()
 
+            print("Lokacije poslane korisniku")
+
 
         
         else:
@@ -162,10 +175,26 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
 
 
-config = configparser.ConfigParser()
-config.read('config.ini')
+def testMySQLConnection():
+    global config
+    try:
+        connection = connect_mysql(config)
+        db = connection.cursor()
+        connection.commit()
+        db.close()
+        connection.close()
+    except:
+        print("Nesupješno povezivanje sa MySQL-om")
+        print("Pokušajte pokrenuti init_mysql.py")
+
+def main():
+    global config
+    config.read('config.ini')
+
+    server_adress = ("0.0.0.0", 8000)
+    httpd = http.server.HTTPServer(server_adress, MyHandler)
+    httpd.serve_forever()
 
 
-server_adress = ("0.0.0.0", 8000)
-httpd = http.server.HTTPServer(server_adress, MyHandler)
-httpd.serve_forever()
+if __name__=='__main__':
+    main()
