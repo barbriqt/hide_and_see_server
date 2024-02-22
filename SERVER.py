@@ -65,7 +65,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 json_str_body = json.dumps(body) + "\n"
                 self.wfile.write(json_str_body.encode("utf-8"))
 
-                print(f"Korisnik {username} je stvorio novu igru\n")
+                print(f"User {username} created a game\n")
             
             connection.commit()
             db.close()
@@ -98,7 +98,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 json_str_body = json.dumps(body) + "\n"
                 self.wfile.write(json_str_body.encode("utf-8"))
 
-                print(f"Korisnik {username} je ušao u igru\n")
+                print(f"User {username} joined the game\n")
             
             connection.commit()
             db.close()
@@ -114,7 +114,10 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             connection = connect_mysql(config)
             db = connection.cursor()
 
-            if '' in (username, location):
+            db.execute(f"SELECT * FROM locations WHERE Username = '{username}'")
+            rows = db.fetchall()
+
+            if ('' in (username, location)) or rows == []:
                 self.send_response(400)
                 self.end_headers()
             
@@ -123,7 +126,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 db.execute(f"UPDATE locations SET Location='{location}', Address='{address}' WHERE Username='{username}'")
 
-                print(f"Primljena lokacija korisnika {username}\n")
+                print(f"Location recieved for user {username}\n")
                 
 
             connection.commit()
@@ -165,7 +168,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             db.close()
             connection.close()
 
-            print("Lokacije poslane korisniku\n")
+            print("Locations fetched\n")
 
 
         
