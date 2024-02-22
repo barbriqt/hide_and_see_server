@@ -3,6 +3,7 @@ import configparser
 from urllib.parse import *
 import mysql.connector
 import json
+import init_mysql
 
 config = configparser.ConfigParser()
 
@@ -64,7 +65,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 json_str_body = json.dumps(body) + "\n"
                 self.wfile.write(json_str_body.encode("utf-8"))
 
-                print(f"Korisnik {username} je stvorio novu igru")
+                print(f"Korisnik {username} je stvorio novu igru\n")
             
             connection.commit()
             db.close()
@@ -97,7 +98,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 json_str_body = json.dumps(body) + "\n"
                 self.wfile.write(json_str_body.encode("utf-8"))
 
-                print(f"Korisnik {username} je ušao u igru")
+                print(f"Korisnik {username} je ušao u igru\n")
             
             connection.commit()
             db.close()
@@ -122,7 +123,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 db.execute(f"UPDATE locations SET Location='{location}', Address='{address}' WHERE Username='{username}'")
 
-                print(f"Primljena lokacija korisnika {username}")
+                print(f"Primljena lokacija korisnika {username}\n")
                 
 
             connection.commit()
@@ -164,7 +165,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             db.close()
             connection.close()
 
-            print("Lokacije poslane korisniku")
+            print("Lokacije poslane korisniku\n")
 
 
         
@@ -184,12 +185,12 @@ def testMySQLConnection():
         db.close()
         connection.close()
     except:
-        print("Nesupješno povezivanje sa MySQL-om")
-        print("Pokušajte pokrenuti init_mysql.py")
+        init_mysql.init()
 
 def main():
     global config
     config.read('config.ini')
+    testMySQLConnection()
 
     server_adress = ("0.0.0.0", 8000)
     httpd = http.server.HTTPServer(server_adress, MyHandler)
