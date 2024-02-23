@@ -9,17 +9,12 @@ def init(config):
     user = config.get('MySQL', 'User')
     password = config.get('MySQL', 'Password')
 
-    # connect to mysql server
-    try:
-        connection = mysql.connector.connect(
-            host = config.get("MySQL", "Ip"),
-            user = config.get("MySQL", "User"),
-            password = getpass("MySQL root Pass: ")
-        )
-        db = connection.cursor()
-
-    except:
-        print("Check root password or try reinstalling MySQL")
+    connection = mysql.connector.connect(
+        host = config.get("MySQL", "Ip"),
+        user = "root",
+        password = getpass("MySQL root Pass: ")
+    )
+    db = connection.cursor()
 
     # delete existing user and database
     db.execute(f"DROP DATABASE IF EXISTS {db_name}")
